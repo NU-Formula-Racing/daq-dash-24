@@ -1,7 +1,7 @@
 #include <map>
 #include <string>
 #include "virtualTimer.h"
-#include "teensy_can.h"
+#include <CAN.h>
 #include "Adafruit_GFX.h"
 #include "Adafruit_RA8875.h"
 
@@ -61,13 +61,12 @@ public:
     void DrawWheelSpeed(Adafruit_RA8875 tft, float wheel_speed, int startX, int startY);
     void DrawDriveState(Adafruit_RA8875 tft, int startX, int startY, int curr_drive_state, int squareSize);
     void DrawIMDStatus(Adafruit_RA8875 tft, int startX, int startY, int imd_status, int squareSize);
-    void HandleError(Adafruit_RA8875 tft, std::string error_message, int startX, int startY, Error type);
+    // void HandleError(Adafruit_RA8875 tft, std::string error_message, int startX, int startY, Error type);
     void DrawString(Adafruit_RA8875 tft, std::string message, int startX, int startY, int size, int16_t color, int16_t backgroundColor, Direction dir = LEFT_TO_RIGHT);
     void HandleBMSFaults(Adafruit_RA8875 tft, int startX, int startY);
 
 private:
-    TeensyCAN<2> p_can_bus{};
-    TeensyCAN<1> g_can_bus{};
+    CAN g_can_bus{};
     VirtualTimerGroup timer_group{};
 
     // Coolant Signals
@@ -82,7 +81,7 @@ private:
 
     // VCU Signals
     CANSignal<int, 0, 8, CANTemplateConvertFloat(1), CANTemplateConvertFloat(0), false> drive_state_signal;
-    CANRXMessage<1> rx_drive_state{p_can_bus, 0x000, drive_state_signal};
+    CANRXMessage<1> rx_drive_state{g_can_bus, 0x000, drive_state_signal};
 
     // IMD Signals
     CANSignal<int16_t, 0, 16, CANTemplateConvertFloat(1), CANTemplateConvertFloat(0)> imd_resistance_signal;

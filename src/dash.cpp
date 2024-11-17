@@ -4,18 +4,16 @@
 #include <map>
 #include <cmath>
 #include <string>
-#include "teensy_can.h"
+#include "CAN.h"
 #include "virtualTimer.h"
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_RA8875.h"
 #include <bitset>
 
-#define RA8875_WAIT 7
-#define RA8875_CS 10
-#define RA8875_RESET 8
-#define IMD_ERR_PIN 6
-#define BMS_ERR_PIN 16
+#define RA8875_WAIT 25
+#define RA8875_CS 5
+#define RA8875_RESET 22
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 480
@@ -41,7 +39,6 @@ bool drive_state_drawn = false;
 
 void Dash::GetCAN()
 {
-    p_can_bus.Tick();
     g_can_bus.Tick();
 }
 
@@ -49,20 +46,13 @@ void Dash::Initialize()
 {
     Serial.println("Initializing Dashboard");
 
-    p_can_bus.Initialize(ICAN::BaudRate::kBaud1M);
     g_can_bus.Initialize(ICAN::BaudRate::kBaud1M);
 
-    p_can_bus.RegisterRXMessage(rx_drive_state);
     g_can_bus.RegisterRXMessage(rx_wheel_speeds);
 
     timer_group.AddTimer(10, [this]()
                          { this->GetCAN(); });
 
-    pinMode(IMD_ERR_PIN, OUTPUT);
-    pinMode(BMS_ERR_PIN, OUTPUT);
-    // ake the pin low
-    digitalWrite(IMD_ERR_PIN, LOW);
-    digitalWrite(BMS_ERR_PIN, LOW);
 
     // create bars
     this->bars["coolant_temp"] = BarData("co", 20, 70, 0, SCREEN_HEIGHT - BAND_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
@@ -303,7 +293,7 @@ void Dash::DrawIMDStatus(Adafruit_RA8875 tft, int startX, int startY, int imd_st
         return;
     }
     
-    HandleError(tft, status, startX, startY, IMD_FAULT);
+    // HandleError(tft, status, startX, startY, IMD_FAULT);
 }
 
 void Dash::HandleBMSFaults(Adafruit_RA8875 tft, int startX, int startY)
@@ -348,51 +338,10 @@ void Dash::HandleBMSFaults(Adafruit_RA8875 tft, int startX, int startY)
 
     // remove the last comma
     error_message.pop_back();
-    HandleError(tft, error_message, startX, startY, BMS_FAULT);
+    // HandleError(tft, error_message, startX, startY, BMS_FAULT);
 }
 
-void Dash::HandleError(Adafruit_RA8875 tft, std::string error_message, int startX, int startY, Error type)
-{
-    // write pin high
-    switch (type)
-    {
-    case BMS_FAULT:
-        digitalWrite(BMS_ERR_PIN, HIGH);
-        break;
-    case IMD_FAULT:
-        digitalWrite(IMD_ERR_PIN, HIGH);
-        break;
-    }
 
-    if (type == BMS_FAULT && this->error == BMS_FAULT)
-    {
-        return;
-    }
-
-    if (type == IMD_FAULT && this->error == IMD_FAULT)
-    {
-        return;
-    }
-
-    if (type == IMD_FAULT && this->error == BMS_FAULT)
-    {
-        return; // give priority to BMS faults
-    }
-    this->error = type;
-
-    this->DrawBackground(tft, RA8875_RED);
-    DrawString(tft, error_message, startX, startY, 5, RA8875_WHITE, RA8875_BLACK);
-
-    // this is a hack, and bad practice btw, but because we are at comp
-    // we are having issues with the bars being cut in half when we draw the error
-    // this is cause we add/subtract the difference in height from the old height
-    // to fix this, we are just gonna set the height to 0, so the bars are drawn from the bottom
-    for (auto &bar : this->bars)
-    {
-        bar.second.value = 0;
-    }
-
-}
 
 void Dash::DrawString(Adafruit_RA8875 tft, std::string message, int startX, int startY, int size, int16_t color, int16_t backgroundColor, Direction dir)
 {
