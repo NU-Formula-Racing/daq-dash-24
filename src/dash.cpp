@@ -11,7 +11,7 @@
 #include "Adafruit_RA8875.h"
 #include <bitset>
 
-#define RA8875_WAIT 25
+#define RA8875_WAIT GPIO_NUM_25
 #define RA8875_CS GPIO_NUM_5
 #define RA8875_RESET GPIO_NUM_22
 

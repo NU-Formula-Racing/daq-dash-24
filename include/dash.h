@@ -11,7 +11,7 @@
 // VirtualTimerGroup read_timer;
 
 #define RA8875_INT GPIO_NUM_23
-#define RA8875_WAIT GPIO_NUM_25
+#define RA8875_WAIT GPIO_NUM_33
 #define RA8875_CS GPIO_NUM_5
 #define RA8875_RESET GPIO_NUM_22
 
