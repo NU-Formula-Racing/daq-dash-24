@@ -12,8 +12,8 @@
 #include <bitset>
 
 #define RA8875_WAIT 25
-#define RA8875_CS 5
-#define RA8875_RESET 22
+#define RA8875_CS GPIO_NUM_5
+#define RA8875_RESET GPIO_NUM_22
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 480
